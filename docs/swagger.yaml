@@ -1,0 +1,581 @@
+openapi: 3.0.3
+info:
+  title: Amorarium API
+  description: |
+    API REST para o projeto Amorarium - Uma aplicação para casais gerenciarem cápsulas do tempo, sonhos compartilhados, galeria de momentos e diário do relacionamento.
+    
+    ## Funcionalidades Principais
+    - Sistema de autenticação JWT
+    - Gerenciamento de casais e convites
+    - Cápsulas do tempo com upload de mídia
+    - Sonhos e metas compartilhadas
+    - Galeria de fotos e vídeos
+    - Diário do casal
+    - Marcos importantes do relacionamento
+    - Lembranças especiais
+    - Dashboard com estatísticas
+    - Painel administrativo
+    
+    ## Autenticação
+    A API utiliza JWT (JSON Web Token) para autenticação. Inclua o token no header Authorization:
+    
+    Authorization: Bearer <seu_token_jwt>
+    
+    
+    ## Upload de Arquivos
+    A API suporta upload de imagens e vídeos através do Cloudinary para:
+    - Avatares e banners de usuários e casais
+    - Imagens em cápsulas
+    - Galeria de momentos
+    - Marcos e lembranças
+  version: 1.0.0
+  contact:
+    name: Amorarium Team
+    email: contato@amorarium.com
+  license:
+    name: Livre para uso educacional
+
+servers:
+  - url: http://localhost:4000
+    description: Servidor de Desenvolvimento
+  - url: https://api.amorarium.com
+    description: Servidor de Produção
+
+security:
+  - BearerAuth: []
+
+paths:
+  # Authentication Routes
+  /api/auth/register:
+    post:
+      tags:
+        - Authentication
+      summary: Cadastrar novo usuário
+      description: Cria uma nova conta de usuário no sistema
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - name
+                - email
+                - password
+              properties:
+                name:
+                  type: string
+                  example: "João Silva"
+                  minLength: 2
+                email:
+                  type: string
+                  format: email
+                  example: "joao@email.com"
+                password:
+                  type: string
+                  minLength: 6
+                  example: "minhasenha123"
+      responses:
+        '201':
+          description: Usuário criado com sucesso
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuthResponse'
+        '400':
+          description: Dados inválidos ou email já existe
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /api/auth/login:
+    post:
+      tags:
+        - Authentication
+      summary: Fazer login
+      description: Autentica um usuário e retorna um token JWT
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - email
+                - password
+              properties:
+                email:
+                  type: string
+                  format: email
+                  example: "joao@email.com"
+                password:
+                  type: string
+                  example: "minhasenha123"
+      responses:
+        '200':
+          description: Login realizado com sucesso
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuthResponse'
+        '401':
+          description: Credenciais inválidas
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /api/auth/me:
+    get:
+      tags:
+        - Authentication
+      summary: Obter dados do usuário autenticado
+      description: Retorna informações do usuário logado
+      responses:
+        '200':
+          description: Dados do usuário
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/User'
+        '404':
+          description: Usuário não encontrado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  # User Routes
+  /api/users/profile/avatar:
+    post:
+      tags:
+        - Users
+      summary: Upload do avatar do usuário
+      description: Faz upload da foto de perfil do usuário
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                file:
+                  type: string
+                  format: binary
+      responses:
+        '200':
+          description: Avatar atualizado com sucesso
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: "Avatar atualizado com sucesso"
+                  avatarUrl:
+                    type: string
+                    example: "https://res.cloudinary.com/exemplo/avatar.jpg"
+        '400':
+          description: Arquivo não enviado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /api/users/profile/banner:
+    post:
+      tags:
+        - Users
+      summary: Upload do banner do usuário
+      description: Faz upload da imagem de banner do usuário
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                file:
+                  type: string
+                  format: binary
+      responses:
+        '200':
+          description: Banner atualizado com sucesso
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: "Banner atualizado com sucesso"
+                  bannerUrl:
+                    type: string
+                    example: "https://res.cloudinary.com/exemplo/banner.jpg"
+
+  # Admin Routes
+  /api/admin/stats:
+    get:
+      tags:
+        - Admin
+      summary: Obter estatísticas do sistema
+      description: Retorna estatísticas gerais do sistema (apenas para administradores)
+      responses:
+        '200':
+          description: Estatísticas do sistema
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AdminStats'
+        '401':
+          description: Token inválido ou ausente
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '403':
+          description: Acesso negado - apenas administradores
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  # Couple Routes
+  /api/couples/upload:
+    post:
+      tags:
+        - Couples
+      summary: Upload de avatar/banner do casal
+      description: Faz upload de imagem para o perfil do casal
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                file:
+                  type: string
+                  format: binary
+                type:
+                  type: string
+                  enum: [avatar, banner]
+                  default: avatar
+                  example: "avatar"
+      responses:
+        '200':
+          description: Upload realizado com sucesso
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: "Upload realizado com sucesso"
+                  url:
+                    type: string
+                    example: "https://res.cloudinary.com/exemplo/couple-avatar.jpg"
+
+  /api/couples/profile:
+    get:
+      tags:
+        - Couples
+      summary: Obter perfil do casal
+      description: Retorna informações do perfil do casal
+      responses:
+        '200':
+          description: Perfil do casal
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Couple'
+        '404':
+          description: Casal não encontrado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+    put:
+      tags:
+        - Couples
+      summary: Atualizar perfil do casal
+      description: Atualiza informações do perfil do casal
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name:
+                  type: string
+                  example: "João & Maria"
+                description:
+                  type: string
+                  example: "Nossa história de amor começou em 2020..."
+                anniversary:
+                  type: string
+                  format: date-time
+                  example: "2020-02-14T00:00:00.000Z"
+      responses:
+        '200':
+          description: Perfil atualizado com sucesso
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Couple'
+
+  /api/couples/invite:
+    post:
+      tags:
+        - Couples
+      summary: Convidar parceiro
+      description: Envia um convite para formar um casal
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - partnerEmail
+              properties:
+                partnerEmail:
+                  type: string
+                  format: email
+                  example: "parceiro@email.com"
+      responses:
+        '200':
+          description: Convite enviado com sucesso
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: "Convite enviado com sucesso"
+
+  /api/couples/accept:
+    post:
+      tags:
+        - Couples
+      summary: Aceitar convite
+      description: Aceita um convite para formar um casal
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - inviteToken
+              properties:
+                inviteToken:
+                  type: string
+                  example: "abc123def456"
+      responses:
+        '200':
+          description: Convite aceito com sucesso
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: "Convite aceito com sucesso"
+
+  /api/couples/generate-invite:
+    post:
+      tags:
+        - Couples
+      summary: Gerar link de convite
+      description: Gera um link de convite para o parceiro
+      responses:
+        '200':
+          description: Link de convite gerado
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  inviteLink:
+                    type: string
+                    example: "https://amorarium.com/invite/abc123def456"
+                  token:
+                    type: string
+                    example: "abc123def456"
+
+  /api/couples/accept-invite/{token}:
+    post:
+      tags:
+        - Couples
+      summary: Aceitar convite via link
+      description: Aceita um convite através do token do link
+      parameters:
+        - name: token
+          in: path
+          required: true
+          description: Token do convite
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Convite aceito com sucesso
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: "Convite aceito com sucesso"
+
+  /api/couples/invite-info/{token}:
+    get:
+      tags:
+        - Couples
+      summary: Obter informações do convite
+      description: Retorna informações sobre um convite (não requer autenticação)
+      security: []
+      parameters:
+        - name: token
+          in: path
+          required: true
+          description: Token do convite
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Informações do convite
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  inviterName:
+                    type: string
+                    example: "João Silva"
+                  valid:
+                    type: boolean
+                    example: true
+
+  /api/couples/name:
+    put:
+      tags:
+        - Couples
+      summary: Atualizar nome do casal
+      description: Atualiza o nome do casal
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - name
+              properties:
+                name:
+                  type: string
+                  example: "João & Maria"
+      responses:
+        '200':
+          description: Nome atualizado com sucesso
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Couple'
+
+  # Capsule Routes
+  /api/capsules:
+    get:
+      tags:
+        - Capsules
+      summary: Listar cápsulas
+      description: Lista todas as cápsulas do casal
+      responses:
+        '200':
+          description: Lista de cápsulas
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Capsule'
+
+    post:
+      tags:
+        - Capsules
+      summary: Criar cápsula
+      description: Cria uma nova cápsula do tempo
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - title
+              properties:
+                title:
+                  type: string
+                  example: "Nossa primeira viagem"
+                content:
+                  type: string
+                  example: "Hoje visitamos Paris pela primeira vez juntos..."
+                imageUrl:
+                  type: string
+                  example: "https://res.cloudinary.com/exemplo/imagem.jpg"
+                musicUrl:
+                  type: string
+                  example: "https://open.spotify.com/track/123"
+                location:
+                  type: string
+                  example: "Paris, França"
+      responses:
+        '201':
+          description: Cápsula criada com sucesso
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Capsule'
+
+  /api/capsules/{id}:
+    get:
+      tags:
+        - Capsules
+      summary: Obter cápsula
+      description: Retorna uma cápsula específica
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: ID da cápsula
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Dados da cápsula
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Capsule'
+        '404':
+          description: Cápsula não encontrada
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+    put:
+      tags:
+        - Capsules
+      summary: Atualizar cápsula
+      description: Atualiza

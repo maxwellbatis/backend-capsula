@@ -1,0 +1,143 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Couple {
+  id          String        @id @default(cuid())
+  createdAt   DateTime      @default(now())
+  users       User[]
+  capsules    Capsule[]
+  dreams      Dream[]
+  avatarUrl   String?
+  bannerUrl   String?
+  description String?
+  anniversary DateTime?
+  name        String? // <-- Adiciona campo name para o casal
+  gallery     GalleryEntry[]
+  diaryEntries DiaryEntry[]
+  milestones  Milestone[]
+  memories    Memory[]
+}
+
+model User {
+  id                String    @id @default(uuid())
+  name              String
+  email             String    @unique
+  password          String
+  avatarUrl         String?
+  bannerUrl         String?
+  description       String?
+  anniversary       DateTime?
+  coupleId          String?
+  couple            Couple?   @relation(fields: [coupleId], references: [id])
+  coupleName        String?
+  inviteToken       String?   @unique
+  inviteTokenExpires DateTime?
+  createdAt         DateTime  @default(now())
+  updatedAt         DateTime  @default(now())
+  isAdmin           Boolean   @default(false)
+  capsules          Capsule[]
+  dreams            Dream[]
+  gallery           GalleryEntry[]
+  diaryEntries      DiaryEntry[]
+  milestones        Milestone[]
+  memories          Memory[]
+  invites           Invite[]
+
+  @@index([email])
+  @@index([coupleId])
+}
+
+model Capsule {
+  id        String   @id @default(uuid())
+  title     String
+  content   String?
+  imageUrl  String?
+  musicUrl  String?
+  location  String?
+  createdAt DateTime @default(now())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id])
+  coupleId  String?
+  couple    Couple?   @relation(fields: [coupleId], references: [id])
+}
+
+model Dream {
+  id        String   @id @default(uuid())
+  title     String
+  dueDate   DateTime
+  createdAt DateTime @default(now())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id])
+  coupleId  String?
+  couple    Couple?   @relation(fields: [coupleId], references: [id])
+}
+
+model GalleryEntry {
+  id          String    @id @default(uuid())
+  title       String
+  description String?
+  imageUrl    String
+  userId      String
+  user        User      @relation(fields: [userId], references: [id])
+  coupleId    String?
+  couple      Couple?   @relation(fields: [coupleId], references: [id])
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+}
+
+model DiaryEntry {
+  id          String    @id @default(uuid())
+  title       String
+  content     String
+  date        DateTime
+  userId      String
+  user        User      @relation(fields: [userId], references: [id])
+  coupleId    String?
+  couple      Couple?   @relation(fields: [coupleId], references: [id])
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+}
+
+model Milestone {
+  id          String    @id @default(uuid())
+  title       String
+  description String?
+  date        DateTime
+  userId      String
+  user        User      @relation(fields: [userId], references: [id])
+  coupleId    String?
+  couple      Couple?   @relation(fields: [coupleId], references: [id])
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+}
+
+model Memory {
+  id          String    @id @default(uuid())
+  title       String
+  description String?
+  date        DateTime
+  userId      String
+  user        User      @relation(fields: [userId], references: [id])
+  coupleId    String?
+  couple      Couple?   @relation(fields: [coupleId], references: [id])
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+}
+
+model Invite {
+  id        String   @id @default(uuid())
+  token     String   @unique
+  userId    String
+  user      User     @relation(fields: [userId], references: [id])
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([token])
+}
