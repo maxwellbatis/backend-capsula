@@ -39,9 +39,7 @@ router.post('/gallery/upload', authenticate, upload.single('file'), async (req, 
     if (!req.file) return res.status(400).json({ message: 'Arquivo não enviado.' });
     const user = await prisma.user.findUnique({ where: { id: req.user.userId } });
     if (!user || !user.coupleId) return res.status(400).json({ message: 'Usuário não está em um casal.' });
-    const type = req.body.type || 'image';
     const description = req.body.description || null;
-    const momentAt = req.body.momentAt ? new Date(req.body.momentAt) : null;
     const streamUpload = (fileBuffer) => {
       return new Promise((resolve, reject) => {
         const stream = cloudinary.uploader.upload_stream(
@@ -57,11 +55,11 @@ router.post('/gallery/upload', authenticate, upload.single('file'), async (req, 
     const result = await streamUpload(req.file.buffer);
     const entry = await prisma.galleryEntry.create({
       data: {
-        url: result.secure_url,
-        type,
         coupleId: user.coupleId,
         description,
-        momentAt,
+        title: description || 'Foto',
+        imageUrl: result.secure_url,
+        userId: req.user.userId,
       },
     });
     res.status(201).json(entry);

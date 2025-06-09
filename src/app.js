@@ -17,7 +17,7 @@ const app = express();
 
 const authLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
-  max: 100,
+  max: 1000, // aumente para 1000 durante desenvolvimento
   message: 'Muitas requisições. Tente novamente em 15 minutos.',
   standardHeaders: true,
   legacyHeaders: false,
