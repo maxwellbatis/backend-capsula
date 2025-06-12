@@ -42,6 +42,7 @@ app.use('/api/couples', require('./src/routes/couple.routes'));
 app.use('/api/capsules', require('./src/routes/capsule.routes'));
 app.use('/api', require('./src/routes/gallery.routes'));
 app.use('/api', require('./src/routes/dashboard.routes'));
+app.use('/api/dreams', require('./src/routes/dream.routes'));
 
 // Rota de saúde
 app.get('/', (req, res) => {

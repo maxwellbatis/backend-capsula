@@ -10,6 +10,7 @@ const coupleRoutes = require('./routes/couple.routes');
 const galleryRoutes = require('./routes/gallery.routes');
 const dashboardRoutes = require('./routes/dashboard.routes');
 const userRoutes = require('./routes/user.routes');
+const dreamRoutes = require('./routes/dream.routes');
 const errorHandler = require('./middlewares/errorHandler');
 require('dotenv').config();
 
@@ -38,6 +39,7 @@ app.use('/api/couples', coupleRoutes);
 app.use('/api/gallery', galleryRoutes);
 app.use('/api', dashboardRoutes);
 app.use('/api/users', userRoutes);
+app.use('/api/dreams', dreamRoutes);
 
 app.use(errorHandler);
 
